@@ -101,7 +101,7 @@ if __name__=='__main__':
              + '.mulA_' + fmStr(pars['multilayerArg']) \
              + '.mulTA_' + fmStr(pars['multilayerTriggerAtt']) \
              + '.mulAA_' + fmStr(pars['multilayerArgAtt']) \
-             + '.mulAE' + fmStr(pars['multilayerArgExternal']) \
+             + '.mulAE_' + fmStr(pars['multilayerArgExternal']) \
              + '.opt_' + pars['optimizer'] \
              + '.drt_' + str(pars['dropoutTrigger']) \
              + '.dra_' + str(pars['dropoutArg']) \
@@ -113,5 +113,6 @@ if __name__=='__main__':
              + '.cvfm_' + fmStr(pars['conv_win_feature_map']) \
              + '.lr_' + str(pars['lr']) \
              + '.nrm_' + str(pars['norm_lim'])
+    print folder
     pars['folder'] =  'NoWin.concat.A-GlobTri.' + folder
     main(pars)

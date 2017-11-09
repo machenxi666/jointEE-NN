@@ -57,50 +57,54 @@ def build_data(data_file, data_list):
         for line in f:
             line = line.strip()
             
-            if line:
+            if line:#每篇文档之间有空行？？
                 inst += [line]
                 
-                if line == '--------Entity_Mention--------': entId = len(inst)
-                if line == '--------Edge_Features--------': edgeId = len(inst)
-                if line == '--------Annotation--------': annId = len(inst)
+                if line == '--------Entity_Mention--------': 
+                    entId = len(inst)
+                if line == '--------Edge_Features--------':
+                    edgeId = len(inst)
+                if line == '--------Annotation--------': 
+                    annId = len(inst)
                 
                 continue
-            
+            #接下来是对每篇文档进行处理
             id = inst[0]
             docId = id[(id.find('=')+1):]
-            docId = docId[0:docId.rfind('#')]
+            docId = docId[0:docId.rfind('#')]#文档id
             if docId not in corpusMap:
                 print 'cannot find ', docId, ' in corpusMap'
                 exit()
-            corpus = corpusMap[docId]
+            corpus = corpusMap[docId]#类别{train，test，valid}
             
             sentence, pos, chunk, clause, posType, grs, ets, ref, title, eligible, nodeFets, entities, edgeFets, eventPos, eventTrigger, eventArgs = parseInst(inst, entId, edgeId, annId)
             
-            inst = []
+            inst = []#设为空，准备存入下一篇文档的信息
             
-            if len(sentence) > maximumLen:
+            if len(sentence) > maximumLen:#大于70
                 tooLong += 1
+                continue #句子太多也不行？？
+            if not eventPos and corpus == 'train':#训练集中如果出现一篇文档中的eventPos为空，就不再进行下面的内容，说明没有事件或出现了错误
                 continue
-            if not eventPos and corpus == 'train': continue
             
             entId, annId = -1, -1
             
-            for i, trigger in enumerate(eventTrigger):
+            for i, trigger in enumerate(eventTrigger): #枚举类型，i为序号，从0开始
                 lookup('trigger', trigger, nodeDict, False)
-                eventTrigger[i] = nodeDict[trigger]
+                eventTrigger[i] = nodeDict[trigger] # nodeDict为触发词字典，eventTrigger存储的内容都换成了字典中的id，以下类似处理
                 
                 for arg_pos in eventArgs[i]:
                     arg_label = eventArgs[i][arg_pos]
                     lookup('argument', arg_label, edgeDict, False)
-                    eventArgs[i][arg_pos] = edgeDict[arg_label]
+                    eventArgs[i][arg_pos] = edgeDict[arg_label] # edgeDict为事件元素的字典
             
             for i, entity in enumerate(entities):
                 etype = entity[4]
-                lookup('entityType', etype, etypeDict, False)
-                entities[i][4] = etypeDict[etype]
+                lookup('entityType', etype, etypeDict, False) #etypeDict为实体类型字典
+                entities[i][4] = etypeDict[etype] 
                 
                 esubtype = entity[5]
-                lookup('entitySubType', esubtype, esubtypeDict, False)
+                lookup('entitySubType', esubtype, esubtypeDict, False)#esubtypeDict为实体子类型字典
                 entities[i][5] = esubtypeDict[esubtype]
                 
             words = set(sentence)
@@ -249,9 +253,11 @@ def build_data(data_file, data_list):
 def lookup(mess, key, gdict, addOne):
     if key not in gdict:
         nk = len(gdict)
-        if addOne: nk += 1
+        if addOne:
+            nk += 1
         gdict[key] = nk
-        if mess: print mess, ': ', key, ' --> id = ', gdict[key]
+        if mess: 
+            print mess, ': ', key, ' --> id = ', gdict[key]
 
 def loadCorpusMap(data_list):
     print 'loading corpusMap ...'
@@ -270,8 +276,8 @@ def parseInst(inst, entId, edgeId, annId):
     sentence, pos, chunk, clause, posType, grs, ets, ref, title, eligible, nodeFets = [], [], [], [], [], [], [], [], [], [], []
     
     for line in inst[1:entId-1]:
-        tokens = line.split('\t')
-        if len(tokens) != 16:
+        tokens = line.split('\t')#对这一行按照tab制表符进行分割
+        if len(tokens) != 16: #少于16个元素的忽略，处理错误
             print 'not have 16 elements: ', line
             exit()
         
@@ -287,22 +293,23 @@ def parseInst(inst, entId, edgeId, annId):
         title += [tokens[13]]
         eligible += [int(tokens[14])]
         nodeFets += [tokens[15].split()]
-    psentLen = len(sentence)
+    psentLen = len(sentence)#一篇文档的句子数量
     
     entities = []
     for line in inst[entId:edgeId-1]:
         mentions = line.split('\t')
-        if len(mentions) != 7 and len(mentions) != 8:
+        if len(mentions) != 7 and len(mentions) != 8: #一行一个实体
             print 'not 7 or 8 elements'
             exit()        
         entities += [[int(mentions[1]), int(mentions[2]), int(mentions[3]), int(mentions[4]), mentions[5], mentions[6]]]
-    pnumEntities = len(entities)
+        #为什么没有0，为什么是int类型？？
+    pnumEntities = len(entities)#一篇文档的实体数量
         
-    edgeFets = []
+    edgeFets = [] #依存分析的内容？？
     for lid in range(pnumEntities):
         leid = edgeId + lid*(1+psentLen)
         if int(inst[leid]) != lid:
-            print 'wrong entity id: ', leid, inst[leid]
+            print 'wrong entity id:    ', leid, inst[leid]
             exit()
         oneWordEdgeFets = []
         for sid in range(1, 1+psentLen):
@@ -328,7 +335,7 @@ def parseInst(inst, entId, edgeId, annId):
         for i in range(1,(len(event)/2)):
             argm[int(event[2*i])] = event[2*i+1]
         argm_sorted = sorted(argm)
-        ars = OrderedDict()
+        ars = OrderedDict() # 排个序
         for eid in argm_sorted:
             ars[eid] = argm[eid]
         eventArgs += [ars]
@@ -426,7 +433,7 @@ def loadEventEntityType(file, nodeDict):
     return res
 
 if __name__=="__main__":
-    np.random.seed(3435)
+    np.random.seed(3435)#选择随机种子，以便以后随机还是能产生那个数，方便调试
     random.seed(3435)
     embType = sys.argv[1]
     w2v_file = sys.argv[2]
@@ -539,5 +546,6 @@ if __name__=="__main__":
         print 'size of ', di, ': ', len(dictionaries[di])
     
     print 'dumping ...'
-    cPickle.dump([revs, embeddings, dictionaries, eventEntityType, idMap], open('cut_' + str(fetCutoff) + '.' + embType + "_jointEE.pkl", "wb"))
+    cPickle.dump([revs, embeddings, dictionaries, eventEntityType, idMap], open('cut_' + str(fetCutoff) + '.'
+                                                                                + embType + "_jointEE.pkl", "wb"))
     print "dataset created!"   

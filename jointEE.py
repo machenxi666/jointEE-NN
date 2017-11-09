@@ -1,18 +1,3 @@
-import numpy
-import time
-import sys
-import subprocess
-import os
-import random
-import cPickle
-import copy
-
-import theano
-from theano import tensor as T
-from collections import OrderedDict, defaultdict
-from theano.tensor.nnet import conv
-from theano.tensor.signal import downsample
-import theano.tensor.shared_randomstreams
 from jeeModels import *
 
 dataset_path = '~/projects/jointEE/nn/externalFets/word2vec_jointEE.pkl'
@@ -441,7 +426,8 @@ def predict(corpus, batch, reModel, features, skipByType):
     
     return predictions_tlabel, predictions_apos, predictions_alabel
 
-def score(corpusName, predictions_tlabel, predictions_apos, predictions_alabel, corpus, idx2word, idx2triggerLabel, idx2argLabel, idMap, evaluation_output):
+def score(corpusName, predictions_tlabel, predictions_apos, predictions_alabel, corpus, idx2word,
+          idx2triggerLabel, idx2argLabel, idMap, evaluation_output):
 
     fout = open(data_predictedFiles[corpusName], 'w')
     
@@ -484,7 +470,9 @@ def score(corpusName, predictions_tlabel, predictions_apos, predictions_alabel, 
     
     performance = {}
     
-    proc = subprocess.Popen([scoreScript, 'NNScorer', data_sourceDir, data_fileLists[corpusName], data_predictedFiles[corpusName], evaluation_output], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    proc = subprocess.Popen([scoreScript, 'NNScorer', data_sourceDir, data_fileLists[corpusName],
+                             data_predictedFiles[corpusName], evaluation_output], stdin=subprocess.PIPE,
+                            stdout=subprocess.PIPE)
     
     ous, _ = proc.communicate()
     working = False
@@ -544,13 +532,14 @@ def train(model='basic',
           nepochs=50,
           folder='./res'):
           
-    folder = '~/projects/jointEE/res/' + folder
+    folder = './' + folder
     #folder = './res/storer'
 
-    if not os.path.exists(folder): os.mkdir(folder)
+    if not os.path.exists(folder): os.mkdir(folder) #为啥这么长的名字，看的要吐血了。。。
     
     evaluation_output = folder
     for pcpu in data_predictedFiles: data_predictedFiles[pcpu] = folder + '/' + pcpu + '.predicted'
+    print data_predictedFiles
 
     print 'loading dataset: ', dataset_path, ' ...'
     revs, embeddings, dictionaries, eventEntityType, idMap = cPickle.load(open(dataset_path, 'rb'))

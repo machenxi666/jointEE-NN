@@ -11,7 +11,7 @@ import theano
 from theano import tensor as T
 from collections import OrderedDict, defaultdict
 from theano.tensor.nnet import conv
-from theano.tensor.signal import downsample
+from theano.tensor.signal import pool
 from theano.updates import OrderedUpdates
 import theano.tensor.shared_randomstreams
 
@@ -386,7 +386,7 @@ def LeNetConvPoolLayer(inps, feature_map, batch, length, window, dim, prefix, pa
 
         
     conv_out_act = T.tanh(conv_out + conv_b.dimshuffle('x', 0, 'x', 'x'))
-    conv_output = downsample.max_pool_2d(input=conv_out_act, ds=pool_size, ignore_border=True)
+    conv_output = pool.max_pool_2d(input=conv_out_act, ds=pool_size, ignore_border=True)
 
     return conv_output.flatten(2)
 
